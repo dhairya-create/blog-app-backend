@@ -1,0 +1,75 @@
+import jwt from "jsonwebtoken";
+import fs from "fs";
+import { Request, Response } from "express";
+import Post from "../../models/Post";
+
+const secret = process.env.JWT_SECRET!;
+
+export const getPosts = async (_: Request, res: Response) => {
+  const posts = await Post.find()
+    .populate("author", "fullName")
+    .sort({ createdAt: -1 });
+  res.json(posts);
+};
+
+export const getPost = async (req: Request, res: Response) => {
+  const post = await Post.findById(req.params.id).populate(
+    "author",
+    "fullName"
+  );
+  if (!post) return res.status(404).end();
+  res.json(post);
+};
+
+export const createPost = async (req: any, res: Response) => {
+  const { token } = req.cookies;
+  if (!token) return res.status(401).end();
+
+  const user = jwt.verify(token, secret) as { id: string };
+
+  let cover = null;
+  if (req.file) {
+    const ext = req.file.originalname.split(".").pop();
+    const newPath = `${req.file.path}.${ext}`;
+    fs.renameSync(req.file.path, newPath);
+    cover = newPath;
+  }
+
+  const post = await Post.create({
+    title: req.body.title,
+    content: req.body.content,
+    cover,
+    author: user.id,
+  });
+
+  res.status(201).json(post);
+};
+
+export const updatePost = async (req: Request, res: Response) => {
+  const { token } = req.cookies;
+  if (!token) return res.status(401).end();
+
+  const user = jwt.verify(token, secret) as { id: string };
+  const post = await Post.findById(req.params.id);
+
+  if (!post || post.author.toString() !== user.id)
+    return res.status(403).end();
+
+  post.title = req.body.title;
+  post.content = req.body.content;
+  await post.save();
+
+  res.json(post);
+};
+
+export const deletePost = async (req: Request, res: Response) => {
+  const { token } = req.cookies;
+  const user = jwt.verify(token, secret) as { id: string };
+
+  const post = await Post.findById(req.params.id);
+  if (!post || post.author.toString() !== user.id)
+    return res.status(403).end();
+
+  await post.deleteOne();
+  res.json({ message: "Deleted" });
+};
