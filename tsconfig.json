@@ -2,23 +2,19 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "outDir": "dist",
-    "rootDir": "src",
 
-    /* 🔧 Make TS forgiving */
+    "rootDir": "src",
+    "outDir": "dist",
+
     "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
 
-    /* Interop + runtime */
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    /* Node environment */
-    "types": ["node"],
-
-    /* Cleaner builds */
-    "forceConsistentCasingInFileNames": true
+    "types": [],
+    "typeRoots": []
   },
   "include": ["src"],
   "exclude": ["node_modules"]
