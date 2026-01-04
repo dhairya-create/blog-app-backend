@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import { Request, Response } from "express";
-import Post from "../../models/Post";
+import Post from "../models/Post";
 
 const secret = process.env.JWT_SECRET!;
 

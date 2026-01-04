@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import upload from "../../middleware/upload";
+import upload from "../middleware/upload";
 import { getPosts, getPost, createPost, updatePost, deletePost } from "../controllers/post.controllers";
 
 const router = Router();
