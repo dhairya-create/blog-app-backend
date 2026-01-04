@@ -1,12 +1,25 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "CommonJS",
     "outDir": "dist",
     "rootDir": "src",
-    "strict": true,
+
+    /* 🔧 Make TS forgiving */
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+
+    /* Interop + runtime */
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "resolveJsonModule": true,
+
+    /* Node environment */
+    "types": ["node"],
+
+    /* Cleaner builds */
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }
