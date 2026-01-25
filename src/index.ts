@@ -12,20 +12,29 @@ import postRoutes from "./routes/post.routes";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-
-const CLIENT_URL = process.env.CLIENT_URL;
-
-if (!CLIENT_URL) {
-  throw new Error("❌ CLIENT_URL is not defined in .env");
-}
+/* ---------- CORS ---------- */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://your-frontend-domain.vercel.app", // change after frontend deploy
+];
 
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: (origin, callback) => {
+      // allow Postman / curl
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
+/* ---------- MIDDLEWARE ---------- */
 app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static("uploads"));
@@ -34,16 +43,14 @@ app.use("/uploads", express.static("uploads"));
 const mongoUrl = process.env.MONGO_URL;
 
 if (!mongoUrl) {
-  throw new Error("❌ MONGO_URL is not defined in .env");
+  throw new Error("❌ MONGO_URL is not defined");
 }
 
 mongoose
   .connect(mongoUrl)
-  .then(() => {
-    console.log("✅ MongoDB connected");
-  })
+  .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
+    console.error("❌ MongoDB error:", err);
     process.exit(1);
   });
 
@@ -59,4 +66,3 @@ app.listen(PORT, () => {
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
-
