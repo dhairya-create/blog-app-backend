@@ -5,6 +5,7 @@ import User from "../models/User";
 
 const secret = process.env.JWT_SECRET!;
 
+/* ---------- REGISTER ---------- */
 export const register = async (req: Request, res: Response) => {
   const { fullName, username, password } = req.body;
   const hashed = await bcrypt.hash(password, 10);
@@ -12,6 +13,7 @@ export const register = async (req: Request, res: Response) => {
   res.json({ message: "Registered" });
 };
 
+/* ---------- LOGIN ---------- */
 export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username });
@@ -20,29 +22,51 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
-  jwt.sign({ id: user._id }, secret, {}, (_, token) => {
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+  const isProd = process.env.NODE_ENV === "production";
 
-    }).json({
+  const token = jwt.sign({ id: user._id }, secret, {
+    expiresIn: "7d",
+  });
+
+  res
+    .cookie("token", token, {
+      httpOnly: true,
+      secure: isProd,                 // true on Render
+      sameSite: isProd ? "none" : "lax",
+    })
+    .json({
       id: user._id,
       username: user.username,
       fullName: user.fullName,
     });
-  });
 };
 
+/* ---------- PROFILE ---------- */
 export const profile = async (req: Request, res: Response) => {
   const { token } = req.cookies;
-  if (!token) return res.status(401).end();
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-  const info = jwt.verify(token, secret) as { id: string };
-  const user = await User.findById(info.id).select("_id username fullName");
-  res.json(user);
+  try {
+    const info = jwt.verify(token, secret) as { id: string };
+    const user = await User.findById(info.id).select(
+      "_id username fullName"
+    );
+    res.json(user);
+  } catch {
+    res.status(401).json({ message: "Invalid token" });
+  }
 };
 
+/* ---------- LOGOUT ---------- */
 export const logout = (_: Request, res: Response) => {
-  res.cookie("token", "", { expires: new Date(0) }).json("ok");
+  const isProd = process.env.NODE_ENV === "production";
+
+  res
+    .cookie("token", "", {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      expires: new Date(0),
+    })
+    .json("ok");
 };
