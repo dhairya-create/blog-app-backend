@@ -7,10 +7,37 @@ const secret = process.env.JWT_SECRET!;
 
 /* ---------- REGISTER ---------- */
 export const register = async (req: Request, res: Response) => {
-  const { fullName, username, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
-  await User.create({ fullName, username, password: hashed });
-  res.json({ message: "Registered" });
+  try {
+    const { fullName, username, password } = req.body;
+
+    // extra safety (optional but good)
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ message: "Username already taken" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await User.create({
+      fullName,
+      username,
+      password: hashed,
+    });
+
+    res.status(201).json({ message: "Registered" });
+  } catch (err: any) {
+    // Mongo duplicate key fallback
+    if (err.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: "Username already taken" });
+    }
+
+    console.error("Register error:", err);
+    res.status(500).json({ message: "Registration failed" });
+  }
 };
 
 /* ---------- LOGIN ---------- */
