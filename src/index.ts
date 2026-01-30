@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 
 import authRoutes from "./routes/auth.routes";
 import postRoutes from "./routes/post.routes";
+console.log("MONGO_URL:", process.env.MONGO_URL);
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
