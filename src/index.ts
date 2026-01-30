@@ -37,7 +37,6 @@ app.use(
 /* ---------- MIDDLEWARE ---------- */
 app.use(express.json());
 app.use(cookieParser());
-app.use("/uploads", express.static("uploads"));
 
 /* ---------- DATABASE ---------- */
 const mongoUrl = process.env.MONGO_URL;

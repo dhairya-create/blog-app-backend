@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import fs from "fs";
 import { Request, Response } from "express";
 import Post from "../models/Post";
+import cloudinary from "../lib/cloudinary";
 
 const secret = process.env.JWT_SECRET!;
 
@@ -27,18 +27,20 @@ export const createPost = async (req: any, res: Response) => {
 
   const user = jwt.verify(token, secret) as { id: string };
 
-  let cover = null;
+  let cover: string | null = null;
+
   if (req.file) {
-    const ext = req.file.originalname.split(".").pop();
-    const newPath = `${req.file.path}.${ext}`;
-    fs.renameSync(req.file.path, newPath);
-    cover = newPath;
+    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+      folder: "blog-posts",
+    });
+
+    cover = uploadResult.secure_url;
   }
 
   const post = await Post.create({
     title: req.body.title,
     content: req.body.content,
-    cover,
+    cover,          // ✅ Cloudinary URL
     author: user.id,
   });
 
