@@ -33,8 +33,16 @@ export const createPost = async (req: any, res: Response) => {
     let cover: string | null = null;
 
     if (req.file) {
-      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-        folder: "blog-posts",
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "blog-posts" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        stream.end(req.file.buffer);
       });
 
       cover = uploadResult.secure_url;
