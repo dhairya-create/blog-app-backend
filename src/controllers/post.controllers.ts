@@ -22,29 +22,36 @@ export const getPost = async (req: Request, res: Response) => {
 };
 
 export const createPost = async (req: any, res: Response) => {
-  const { token } = req.cookies;
-  if (!token) return res.status(401).end();
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-  const user = jwt.verify(token, secret) as { id: string };
+    const user = jwt.verify(token, secret) as { id: string };
 
-  let cover: string | null = null;
+    let cover: string | null = null;
 
-  if (req.file) {
-    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-      folder: "blog-posts",
+    if (req.file) {
+      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        folder: "blog-posts",
+      });
+
+      cover = uploadResult.secure_url;
+    }
+
+    const post = await Post.create({
+      title: req.body.title,
+      content: req.body.content,
+      cover,
+      author: user.id,
     });
 
-    cover = uploadResult.secure_url;
+    res.status(201).json(post);
+  } catch (err) {
+    console.error("❌ Create post error:", err);
+    res.status(500).json({ message: "Failed to create post" });
   }
-
-  const post = await Post.create({
-    title: req.body.title,
-    content: req.body.content,
-    cover,          // ✅ Cloudinary URL
-    author: user.id,
-  });
-
-  res.status(201).json(post);
 };
 
 export const updatePost = async (req: Request, res: Response) => {
